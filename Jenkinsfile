@@ -6,7 +6,7 @@ options {
 }
 
 tools {
-    maven ‘Maven 3.9.6’
+    maven '3.9.11’
 }
 
 stages {
