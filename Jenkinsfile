@@ -12,7 +12,7 @@ tools {
 stages {
     stage('Build') {
         steps {
-            sh 'mvn clean compile'
+            sh '/opt/homebrew/bin/mvn clean compile'
         }
     }
 
