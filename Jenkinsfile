@@ -12,7 +12,7 @@ tools {
 stages {
     stage('Build') {
         steps {
-            sh 'mvn clean compile’
+            sh 'mvn clean compile'
         }
     }
 
@@ -22,19 +22,19 @@ stages {
         }
         post {
             always {
-                junit 'target/surefire-reports/*.xml’
+                junit 'target/surefire-reports/*.xml'
             }
         }
     }
     stage('Package') {
         steps {
-            sh 'mvn package’
+            sh 'mvn package'
         }
     }
     stage('Deliver') {
         steps {
             sh 'ls -F'
-            sh './jenkins/scripts/deliver.sh’
+            sh './jenkins/scripts/deliver.sh'
         }
     }
 }
