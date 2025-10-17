@@ -1,43 +1,42 @@
 pipeline {
-    agent any
+agent any
 
-    options {
-        skipStagesAfterUnstable()
+options {
+    skipStagesAfterUnstable()
+}
+
+tools {
+    maven '3.9.11'
+}
+
+stages {
+    stage('Build') {
+        steps {
+            sh 'mvn clean compile'
+        }
     }
 
-    tools {
-        maven '3.9.11'
+    stage('Test') {
+        steps {
+            sh 'mvn test'
+        }
+        post {
+            always {
+                junit 'target/surefire-reports/*.xml'
+            }
+        }
     }
-
-    stages {
-        stage('Build') {
-            steps {
-                sh 'mvn clean compile'
-            }
+    stage('Package') {
+        steps {
+            sh 'mvn package'
         }
-
-        stage('Test') {
-            steps {
-                sh 'mvn test'
-            }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'
-                }
-            }
-        }
-
-        stage('Package') {
-            steps {
-                sh 'mvn package'
-            }
-        }
-
-        stage('Deliver') {
-            steps {
-                sh 'ls -F'
-                sh './jenkins/scripts/deliver.sh'
-            }
+    }
+    stage('Deliver') {
+        steps {
+            sh 'ls -F'
+            sh './jenkins/scripts/deliver.sh'
         }
     }
 }
+}
+
