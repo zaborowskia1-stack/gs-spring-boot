@@ -10,6 +10,14 @@ pipeline {
     }
 
     stages {
+        stage('Debug') {
+            steps {
+                sh 'echo "Testing environment..."'
+                sh 'which mvn || echo "Maven not found"'
+                sh 'ls -R jenkins || echo "jenkins folder missing"'
+            }
+        }
+
         stage('Build') {
             steps {
                 sh 'mvn clean compile'
