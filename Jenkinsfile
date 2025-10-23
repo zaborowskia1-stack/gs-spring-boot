@@ -10,6 +10,14 @@ tools {
 }
 
 stages {
+    stage('Check Environment') {
+        steps {
+            sh 'echo $PATH'
+            sh 'java -version'
+            sh 'mvn -v'
+        }
+    }
+
     stage('Build') {
         steps {
             sh 'mvn clean compile'
