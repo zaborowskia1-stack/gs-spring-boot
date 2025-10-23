@@ -1,50 +1,52 @@
 pipeline {
-agent any
+    agent any
 
-options {
-    skipStagesAfterUnstable()
-}
-
-tools {
-    maven '3.9.11'
-}
-
-stages {
-    stage('Check Environment') {
-        steps {
-            sh 'echo $PATH'
-            sh 'java -version'
-            sh 'mvn -v'
-        }
+    options {
+        skipStagesAfterUnstable()
     }
 
-    stage('Build') {
-        steps {
-            sh 'mvn clean compile'
-        }
+    tools {
+        maven '3.9.11'
     }
 
-    stage('Test') {
-        steps {
-            sh 'mvn test'
+    stages {
+        stage('Checkout Source Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/zaborowskia1-stack/gs-spring-boot.git'
+            }
         }
-        post {
-            always {
-                junit 'target/surefire-reports/*.xml'
+
+        stage('Test') {
+            steps {
+                sh 'git --version'
+                sh 'mvn --version'
+                sh 'mvn clean test'
+            }
+        }
+
+        stage('Build and Package') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Archive Artifacts') {
+            steps {
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
     }
-    stage('Package') {
-        steps {
-            sh 'mvn package'
-        }
-    }
-    stage('Deliver') {
-        steps {
-            sh 'ls -F'
-            sh './jenkins/scripts/deliver.sh'
-        }
-    }
-}
-}
 
+    post {
+        always {
+            echo 'Pipeline finished.'
+        }
+        success {
+            echo 'Build successful!'
+        }
+        failure {
+            echo 'Build failed!'
+        }
+    }
+
+}
