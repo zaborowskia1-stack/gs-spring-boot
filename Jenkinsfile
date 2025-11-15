@@ -12,7 +12,7 @@ pipeline {
     stages {
         stage('Checkout Source Code') {
             steps {
-                git branch: 'main', url: 'git@github.com:zaborowskia1-stack/gs-spring-boot.git'
+                git branch: 'main', url: 'https://github.com/zaborowskia1-stack/gs-spring-boot.git'
             }
         }
 
@@ -30,28 +30,29 @@ pipeline {
             }
         }
 
-        stage('Archive Artifacts') {
+        stage('Deploy to Nexus') {
+            environment {
+                NEXUS_USER = credentials('nexus-admin')
+            }
             steps {
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                sh '''
+                    mvn deploy:deploy-file \
+                        -DgroupId=com.example \
+                        -DartifactId=spring-boot-complete \
+                        -Dversion=0.0.1 \
+                        -Dpackaging=jar \
+                        -Dfile=target/spring-boot-complete-0.0.1.jar \
+                        -DrepositoryId=nexus-admin \
+                        -Durl=http://172.17.0.2:8081/repository/maven-releases/ \
+                        -Dusername=$NEXUS_USER_USR \
+                        -Dpassword=$NEXUS_USER_PSW
+                '''
             }
         }
 
-        stage('Deploy to Nexus') {
+        stage('Archive Artifacts') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'nexus-admin', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
-                    sh """
-                        mvn deploy:deploy-file \
-                            -DgroupId=com.example \
-                            -DartifactId=spring-boot-complete \
-                            -Dversion=0.0.1 \
-                            -Dpackaging=jar \
-                            -Dfile=target/spring-boot-complete-0.0.1.jar \
-                            -DrepositoryId=nexus-admin \
-                            -Durl=http://172.17.0.2:8081/repository/maven-releases/ \
-                            -Dusername=$NEXUS_USER \
-                            -Dpassword=$NEXUS_PASS
-                    """
-                }
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
     }
@@ -61,7 +62,7 @@ pipeline {
             echo 'Pipeline finished.'
         }
         success {
-            echo 'Build successful!'
+            echo 'Build and deploy successful!'
         }
         failure {
             echo 'Build failed!'
