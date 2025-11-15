@@ -9,16 +9,6 @@ pipeline {
         maven '3.9.11'
     }
 
-    environment {
-        NEXUS_URL = "http://nexus:8081"
-        NEXUS_REPO = "maven-releases"
-        NEXUS_CREDENTIALS = "nexus-admin"
-        GROUP_ID = "com.example"
-        ARTIFACT_ID = "spring-boot-complete"
-        VERSION = "0.0.1-SNAPSHOT"
-        PACKAGING = "jar"
-    }
-
     stages {
         stage('Checkout Source Code') {
             steps {
@@ -48,18 +38,18 @@ pipeline {
 
         stage('Deploy to Nexus') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${NEXUS_CREDENTIALS}", 
+                withCredentials([usernamePassword(credentialsId: 'nexus-admin', 
                                                  usernameVariable: 'NEXUS_USER', 
                                                  passwordVariable: 'NEXUS_PASS')]) {
                     sh '''
                         mvn deploy:deploy-file \
-                          -DgroupId=${GROUP_ID} \
-                          -DartifactId=${ARTIFACT_ID} \
-                          -Dversion=${VERSION} \
-                          -Dpackaging=${PACKAGING} \
-                          -Dfile=target/${ARTIFACT_ID}-${VERSION}.jar \
-                          -DrepositoryId=nexus-releases \
-                          -Durl=${NEXUS_URL}/repository/${NEXUS_REPO} \
+                          -DgroupId=com.example \
+                          -DartifactId=spring-boot-complete \
+                          -Dversion=0.0.1-SNAPSHOT \
+                          -Dpackaging=jar \
+                          -Dfile=target/spring-boot-complete-0.0.1-SNAPSHOT.jar \
+                          -DrepositoryId=nexus-admin \
+                          -Durl=http://172.17.0.2:8081/repository/maven-releases \
                           -Dusername=${NEXUS_USER} \
                           -Dpassword=${NEXUS_PASS}
                     '''
@@ -73,7 +63,7 @@ pipeline {
             echo 'Pipeline finished.'
         }
         success {
-            echo 'Build and deploy successful!'
+            echo 'Build successful!'
         }
         failure {
             echo 'Build failed!'
