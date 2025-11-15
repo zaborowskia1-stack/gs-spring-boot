@@ -30,30 +30,33 @@ pipeline {
             }
         }
 
-        stage('Archive Artifacts') {
+        stage('Deploy to Nexus') {
+            environment {
+                NEXUS_REPO = 'http://nexus:8081/repository/maven-releases'
+            }
             steps {
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                withCredentials([usernamePassword(credentialsId: 'nexus-admin', 
+                                                 passwordVariable: 'NEXUS_PASS', 
+                                                 usernameVariable: 'NEXUS_USER')]) {
+                    sh """
+                        mvn deploy:deploy-file \
+                        -DgroupId=com.example \
+                        -DartifactId=spring-boot-complete \
+                        -Dversion=0.0.1-SNAPSHOT \
+                        -Dpackaging=jar \
+                        -Dfile=target/spring-boot-complete-0.0.1-SNAPSHOT.jar \
+                        -DrepositoryId=nexus-admin \
+                        -Durl=${NEXUS_REPO} \
+                        -Dusername=${NEXUS_USER} \
+                        -Dpassword=${NEXUS_PASS}
+                    """
+                }
             }
         }
 
-        stage('Deploy to Nexus') {
+        stage('Archive Artifacts') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'nexus-admin', 
-                                                 usernameVariable: 'NEXUS_USER', 
-                                                 passwordVariable: 'NEXUS_PASS')]) {
-                    sh '''
-                        mvn deploy:deploy-file \
-                          -DgroupId=com.example \
-                          -DartifactId=spring-boot-complete \
-                          -Dversion=0.0.1-SNAPSHOT \
-                          -Dpackaging=jar \
-                          -Dfile=target/spring-boot-complete-0.0.1-SNAPSHOT.jar \
-                          -DrepositoryId=nexus-admin \
-                          -Durl=http://172.17.0.2:8081/repository/maven-releases \
-                          -Dusername=${NEXUS_USER} \
-                          -Dpassword=${NEXUS_PASS}
-                    '''
-                }
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
     }
@@ -63,10 +66,10 @@ pipeline {
             echo 'Pipeline finished.'
         }
         success {
-            echo 'Build successful!'
+            echo 'Build and deploy successful!'
         }
         failure {
-            echo 'Build failed!'
+            echo 'Build or deploy failed!'
         }
     }
 }
