@@ -9,10 +9,20 @@ pipeline {
         maven '3.9.11'
     }
 
+    environment {
+        NEXUS_CREDENTIALS = credentials('nexus-admin') // Jenkins credentials ID
+        NEXUS_URL = 'http://172.17.0.2:8081/repository/maven-releases/'
+        GROUP_ID = 'com.example'
+        ARTIFACT_ID = 'spring-boot-complete'
+        VERSION = '0.0.1' // Must not be a SNAPSHOT
+        PACKAGING = 'jar'
+        FILE = "target/${ARTIFACT_ID}-${VERSION}.jar"
+    }
+
     stages {
         stage('Checkout Source Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/zaborowskia1-stack/gs-spring-boot.git'
+                git branch: 'main', url: 'git@github.com:zaborowskia1-stack/gs-spring-boot.git'
             }
         }
 
@@ -26,33 +36,34 @@ pipeline {
 
         stage('Build and Package') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh "mvn clean package -DskipTests -Drevision=${VERSION}"
             }
         }
 
         stage('Deploy to Nexus') {
-            environment {
-                NEXUS_USER = credentials('nexus-admin')
-            }
             steps {
-                sh '''
-                    mvn deploy:deploy-file \
-                        -DgroupId=com.example \
-                        -DartifactId=spring-boot-complete \
-                        -Dversion=0.0.1 \
-                        -Dpackaging=jar \
-                        -Dfile=target/spring-boot-complete-0.0.1.jar \
+                withCredentials([usernamePassword(credentialsId: 'nexus-admin', 
+                                                 usernameVariable: 'NEXUS_USER', 
+                                                 passwordVariable: 'NEXUS_PASS')]) {
+                    sh """
+                        mvn deploy:deploy-file \
+                        -DgroupId=${GROUP_ID} \
+                        -DartifactId=${ARTIFACT_ID} \
+                        -Dversion=${VERSION} \
+                        -Dpackaging=${PACKAGING} \
+                        -Dfile=${FILE} \
                         -DrepositoryId=nexus-admin \
-                        -Durl=http://172.17.0.2:8081/repository/maven-releases/ \
-                        -Dusername=$NEXUS_USER_USR \
-                        -Dpassword=$NEXUS_USER_PSW
-                '''
+                        -Durl=${NEXUS_URL} \
+                        -Dusername=${NEXUS_USER} \
+                        -Dpassword=${NEXUS_PASS}
+                    """
+                }
             }
         }
 
         stage('Archive Artifacts') {
             steps {
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                archiveArtifacts artifacts: "target/*.jar", fingerprint: true
             }
         }
     }
@@ -62,10 +73,10 @@ pipeline {
             echo 'Pipeline finished.'
         }
         success {
-            echo 'Build and deploy successful!'
+            echo 'Release build successful!'
         }
         failure {
-            echo 'Build failed!'
+            echo 'Release build failed!'
         }
     }
 }
