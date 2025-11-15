@@ -9,6 +9,16 @@ pipeline {
         maven '3.9.11'
     }
 
+    environment {
+        NEXUS_URL = "http://localhost:8081"
+        NEXUS_REPO = "maven-releases"
+        NEXUS_CREDENTIALS = "nexus-admin"
+        GROUP_ID = "com.example"
+        ARTIFACT_ID = "gs-spring-boot"
+        VERSION = "1.0.0"
+        PACKAGING = "jar"
+    }
+
     stages {
         stage('Checkout Source Code') {
             steps {
@@ -35,6 +45,27 @@ pipeline {
                 archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
+
+        stage('Deploy to Nexus') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${NEXUS_CREDENTIALS}", 
+                                                 usernameVariable: 'NEXUS_USER', 
+                                                 passwordVariable: 'NEXUS_PASS')]) {
+                    sh """
+                        mvn deploy:deploy-file \
+                          -DgroupId=${GROUP_ID} \
+                          -DartifactId=${ARTIFACT_ID} \
+                          -Dversion=${VERSION} \
+                          -Dpackaging=${PACKAGING} \
+                          -Dfile=target/${ARTIFACT_ID}-${VERSION}.jar \
+                          -DrepositoryId=${NEXUS_CREDENTIALS} \
+                          -Durl=${NEXUS_URL}/repository/${NEXUS_REPO} \
+                          -Dusername=${NEXUS_USER} \
+                          -Dpassword=${NEXUS_PASS}
+                    """
+                }
+            }
+        }
     }
 
     post {
@@ -48,5 +79,4 @@ pipeline {
             echo 'Build failed!'
         }
     }
-
 }
