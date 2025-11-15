@@ -51,7 +51,18 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: "${NEXUS_CREDENTIALS}", 
                                                  usernameVariable: 'NEXUS_USER', 
                                                  passwordVariable: 'NEXUS_PASS')]) {
-                    sh 'mvn deploy:deploy-file -DgroupId=${GROUP_ID} -DartifactId=${ARTIFACT_ID} -Dversion=${VERSION} -Dpackaging=${PACKAGING} -Dfile=target/${ARTIFACT_ID}-${VERSION}.jar -DrepositoryId=${NEXUS_CREDENTIALS} -Durl=${NEXUS_URL}/repository/${NEXUS_REPO} -Dusername=${NEXUS_USER} -Dpassword=${NEXUS_PASS}'
+                    sh '''
+                        mvn deploy:deploy-file \
+                          -DgroupId=${GROUP_ID} \
+                          -DartifactId=${ARTIFACT_ID} \
+                          -Dversion=${VERSION} \
+                          -Dpackaging=${PACKAGING} \
+                          -Dfile=target/${ARTIFACT_ID}-${VERSION}.jar \
+                          -DrepositoryId=nexus-releases \
+                          -Durl=${NEXUS_URL}/repository/${NEXUS_REPO} \
+                          -Dusername=${NEXUS_USER} \
+                          -Dpassword=${NEXUS_PASS}
+                    '''
                 }
             }
         }
