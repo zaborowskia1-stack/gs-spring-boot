@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    options {
-        skipStagesAfterUnstable()
-    }
-
     tools {
         maven '3.9.11'
     }
@@ -12,7 +8,7 @@ pipeline {
     stages {
         stage('Checkout Source Code') {
             steps {
-                git branch: 'main', url: 'git@github.com:zaborowskia1-stack/gs-spring-boot.git'
+                git branch: 'main', url: 'https://github.com/zaborowskia1-stack/gs-spring-boot.git'
             }
         }
 
@@ -32,18 +28,18 @@ pipeline {
 
         stage('Deploy to Nexus') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'nexus-admin', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
+                withCredentials([usernamePassword(credentialsId: 'nexus-admin', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
                     sh '''
-                        mvn deploy:deploy-file \
+                    mvn deploy:deploy-file \
                         -DgroupId=com.example \
                         -DartifactId=spring-boot-complete \
                         -Dversion=0.0.1-SNAPSHOT \
                         -Dpackaging=jar \
                         -Dfile=target/spring-boot-complete-0.0.1-SNAPSHOT.jar \
                         -DrepositoryId=nexus-admin \
-                        -Durl=http://172.17.0.2:8081/repository/maven-releases \
-                        -Dusername="$NEXUS_USER" \
-                        -Dpassword="$NEXUS_PASS"
+                        -Durl=http://nexus:8081/repository/maven-releases/ \
+                        -Dusername=$NEXUS_USER \
+                        -Dpassword=$NEXUS_PASS
                     '''
                 }
             }
