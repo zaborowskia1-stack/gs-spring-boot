@@ -62,7 +62,7 @@ pipeline {
             echo 'Pipeline finished.'
         }
         success {
-            echo 'Build successful!'
+            echo 'Build and deploy successful!'
         }
         failure {
             echo 'Build failed!'
